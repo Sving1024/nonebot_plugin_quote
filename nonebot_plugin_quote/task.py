@@ -1,3 +1,7 @@
+"""
+提供语录库的核心功能，包括添加、查询、删除语录，以及管理标签等。
+"""
+
 import asyncio
 import pathlib
 import os
@@ -51,8 +55,12 @@ else:
     logger.warning("已创建 json 文件")
 
 
-# 倒排索引 转 正向索引
 def inverted2forward(index):
+    """
+    将 index 从倒排索引转正向索引
+
+    :param index: 倒排索引表
+    """
     result = {}
     for qq_group in index.keys():
         result[qq_group] = {}
@@ -106,6 +114,7 @@ def quote_exists(group_id):
     """
     return group_id in record_dict and len(record_dict[group_id]) > 0
 
+
 def image_exists(group_id, img_path):
     """
     判断一个图片是否在语录库中
@@ -114,6 +123,7 @@ def image_exists(group_id, img_path):
     :param img_path: 图片路径
     """
     return quote_exists(group_id) and img_path in record_dict[group_id]
+
 
 # 倒排索引表查询图片
 def random_quote(sentence, group_id) -> str:
@@ -150,8 +160,13 @@ def random_quote(sentence, group_id) -> str:
         return random.choice(result_pool)
 
 
-# 删除内容
 def delete(img_name, group_id):
+    """
+    删除语录库中的图片
+
+    :param img_name: 图片名称
+    :param group_id: 群号
+    """
     check = False
     try:
         keys = list(inverted_index[group_id].keys())
@@ -176,6 +191,12 @@ def delete(img_name, group_id):
 
 
 def _remove(arr, ele):
+    """
+    从 arr 中删除以 ele 开头的元素，返回元素是否存在
+
+    :param arr: 列表
+    :param ele: 元素前缀
+    """
     old_len = len(arr)
     for name in arr:
         file_name = os.path.basename(name)
@@ -187,6 +208,11 @@ def _remove(arr, ele):
 
 
 def cut_sentence(sentence):
+    """
+    将 sentence 分词，返回分词列表
+    
+    :param sentence: 需要分词的句子
+    """
     cut_words = jieba.lcut_for_search(sentence)
     cut_words = list(set(cut_words))
     remove_set = set(
@@ -216,16 +242,27 @@ def cut_sentence(sentence):
     return new_words
 
 
-# 输出所有tag
-def findAlltag(img_name, group_id):
+def find_all_tag(img_name, group_id):
+    """
+    输出 group_id 群中以 img_name 开头的图片的所有 tag
+    
+    :param img_name: 图片名称前缀
+    :param group_id: 群号
+    """
     for key, value in forward_index[group_id].items():
         file_name = os.path.basename(key)
         if file_name.startswith(img_name):
             return value
 
 
-# 添加tag
-def addTag(tags, img_name, group_id):
+def add_tag(tags, img_name, group_id):
+    """
+    添加tag
+    
+    :param tags: tag 列表
+    :param img_name: 图片名称前缀
+    :param group_id: 群号
+    """
     # 是否存在
     path = None
     for key in forward_index[group_id].keys():
@@ -241,9 +278,14 @@ def addTag(tags, img_name, group_id):
         inverted_index[group_id].setdefault(tag, []).append(path)
     return path, forward_index, inverted_index
 
-
-# 删除tag
-def delTag(tags, img_name, group_id):
+def delete_tag(tags, img_name, group_id):
+    """
+    删除 tag
+    
+    :param tags: tag 列表
+    :param img_name: 图片名称前缀
+    :param group_id: 群号
+    """
     path = None
     for key in forward_index[group_id].keys():
         file_name = os.path.basename(key)
@@ -267,6 +309,12 @@ IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif"]
 
 
 def copy_images_files(source, destinate):
+    """
+    从 source 目录复制图片到 destinate 目录，并返回图片的 md5 和新文件名的列表
+    
+    :param source: 源目录路径
+    :param destinate: 目标目录路径
+    """
     image_files = []
     destination_path = pathlib.Path(destinate)
     if not destination_path.exists():
@@ -295,6 +343,11 @@ engine = RapidOCR()
 
 
 def get_ocr_content(image_path):
+    """
+    使用 RapidOCR 识别图片内容并返回文本
+    
+    :param image_path: 图片路径
+    """
     try:
         r = engine(image_path)
         if getattr(r, "txts", None) is None:
@@ -335,7 +388,7 @@ def dump_data():
 async def download_url(url: str) -> bytes:
     """
     从 url 下载图片，返回图片的二进制内容
-    
+
     :param url: 说明
     :type url: str
     :return: 说明

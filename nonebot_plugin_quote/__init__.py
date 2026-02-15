@@ -42,9 +42,9 @@ from .task import (
     offer,
     random_quote,
     delete,
-    findAlltag,
-    addTag,
-    delTag,
+    find_all_tag,
+    add_tag,
+    delete_tag,
     get_ocr_content,
     copy_images_files,
     quote_exists,
@@ -364,7 +364,7 @@ async def alltag_handle(bot: Bot, event: Event):
 
     error_message = "请回复需要指定语录"
     imgs = await reply_handle(bot, error_message, raw_message, group_id, user_id, alltag)
-    tags = findAlltag(imgs, group_id)
+    tags = find_all_tag(imgs, group_id)
     if tags is None:
         msg = "该语录不存在"
     else:
@@ -404,7 +404,7 @@ async def addtag_handle(bot: Bot, event: Event):
     error_message = "请回复需要指定语录"
     imgs = await reply_handle(bot, error_message, raw_message, group_id, user_id, addtag)
 
-    flag, _, _ = addTag(tags, imgs, group_id)
+    flag, _, _ = add_tag(tags, imgs, group_id)
 
     if flag is None:
         msg = "该语录不存在"
@@ -442,7 +442,7 @@ async def deltag_handle(bot: Bot, event: Event):
     error_message = "请回复需要指定语录"
     imgs = await reply_handle(bot, error_message, raw_message, group_id, user_id, deltag)
 
-    flag, _, _ = delTag(tags, imgs, group_id)
+    flag, _, _ = delete_tag(tags, imgs, group_id)
 
     if flag is None:
         msg = "该语录不存在"
@@ -460,11 +460,11 @@ make_record = on_regex(
 
 @make_record.handle()
 async def make_record_handle(event: MessageEvent):
-    if not plugin_config.quote_upload:
-        await make_record.finish("管理员已关闭上传功能TUT，请改用生成指令")
     """
     处理“记录”指令。
     """
+    if not plugin_config.quote_upload:
+        await make_record.finish("管理员已关闭上传功能TUT，请改用生成指令")
     if not check_font(font_path, author_font_path):
         # 字体没配置就返回
         logger.warning("未配置字体路径，部分功能无法使用")
@@ -639,7 +639,7 @@ tags=aaa bbb ccc"""
         if len(tags) != 0:
             tags = tags[0].strip().split(" ")
             for dest_group_id in rest_group:
-                addTag(tags, imgid, dest_group_id)
+                add_tag(tags, imgid, dest_group_id)
 
         # 每5张语录持久化一次
         if idx % 5 == 0:
