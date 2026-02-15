@@ -460,6 +460,8 @@ make_record = on_regex(
 
 @make_record.handle()
 async def make_record_handle(event: MessageEvent):
+    if not plugin_config.quote_upload:
+        await make_record.finish("管理员已关闭上传功能TUT，请改用生成指令")
     """
     处理“记录”指令。
     """
