@@ -82,13 +82,13 @@ def offer(group_id, img_file: pathlib.Path, content):
         inverted_index[group_id] = {}
         forward_index[group_id] = {}
 
-    forward_index[group_id][str(img_file)] = set(cut_words)
+    forward_index[group_id][str(img_file.absolute())] = set(cut_words)
     # 分词是否在群的hashmap里
     for word in cut_words:
         if word not in inverted_index[group_id]:
-            inverted_index[group_id][word] = [str(img_file)]
+            inverted_index[group_id][word] = [str(img_file.absolute())]
         else:
-            inverted_index[group_id][word].append(str(img_file))
+            inverted_index[group_id][word].append(str(img_file.absolute()))
 
     if group_id not in record_dict:
         record_dict[group_id] = [str(img_file.absolute())]
