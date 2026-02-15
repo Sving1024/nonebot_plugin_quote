@@ -200,7 +200,7 @@ async def save_img_handle(bot: Bot, event: MessageEvent):
     try:
         response = await bot.get_image(file=file_name)
         source_path = pathlib.Path(response["file"])
-        source_path.copy_into(QUOTE_PATH)
+        shutil.copyfile(source_path, QUOTE_PATH / source_path.name)
         image_path = QUOTE_PATH / source_path.name
     except ApiNotAvailable  as e:
         logger.warning(

@@ -2,6 +2,7 @@
 提供语录库的核心功能，包括添加、查询、删除语录，以及管理标签等。
 """
 
+import shutil
 import asyncio
 import pathlib
 import os
@@ -325,7 +326,7 @@ def copy_images_files(source, destinate):
             md5 = get_img_md5(str(file))
             tname = md5 + extension
             # 复制到目录
-            file.copy(destination_path / tname)
+            shutil.copyfile(file, destination_path / tname)
             image_files.append((md5, tname))
     return image_files
 
