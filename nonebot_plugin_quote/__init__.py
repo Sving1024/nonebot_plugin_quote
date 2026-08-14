@@ -23,7 +23,7 @@ from nonebot import (
     require,
 )
 from nonebot.exception import ApiNotAvailable
-from nonebot.rule import to_me
+from nonebot.rule import to_me, is_type
 from nonebot.adapters.onebot.v11 import (
     Bot,
     Event,
@@ -58,7 +58,6 @@ from .task import (
 from .config import Config, check_font
 from .make_image import generate_quote_image
 
-
 __plugin_meta__ = PluginMetadata(
     name="群聊语录库",
     description="一款QQ群语录库——支持上传聊天截图为语录，随机投放语录，关键词搜索语录精准投放",
@@ -89,7 +88,7 @@ font_path = plugin_config.font_path
 author_font_path = plugin_config.author_font_path
 
 # 判断参数配置情况
-(QUOTE_PATH.mkdir(exist_ok=True))
+QUOTE_PATH.mkdir(exist_ok=True)
 
 if not check_font(font_path, author_font_path):
     logger.warning("未配置字体路径，部分功能无法使用")
@@ -204,15 +203,15 @@ async def save_img_handle(bot: Bot, event: MessageEvent):
         source_path = pathlib.Path(response["file"])
         shutil.copyfile(source_path, QUOTE_PATH / source_path.name)
         image_path = QUOTE_PATH / source_path.name
-    except ApiNotAvailable  as e:
+    except ApiNotAvailable as e:
         logger.warning(
             f"bot.call_api 失败，可能在使用 Lagrange，使用 httpx 进行下载: {e}"
         )
         image_url = file_name
-        match = re.search(r'filename=([^,]+)', raw_message)
+        match = re.search(r"filename=([^,]+)", raw_message)
         if not match:
             await save_img.finish("未检测到图片，请回复所需上传的图片消息来上传语录")
-        file_name = match.group(1).strip('"\'')
+        file_name = match.group(1).strip("\"'")
         async with httpx.AsyncClient() as client:
             image_url = image_url.replace("&amp;", "&")
             response = await client.get(image_url)
@@ -356,6 +355,7 @@ alltag = on_command(
     **need_at,
 )
 
+
 @alltag.handle()
 async def alltag_handle(bot: Bot, event: Event):
     """处理“标签”指令。"""
@@ -369,7 +369,9 @@ async def alltag_handle(bot: Bot, event: Event):
     raw_message = str(event)
 
     error_message = "请回复需要指定语录"
-    imgs = await reply_handle(bot, error_message, raw_message, group_id, user_id, alltag)
+    imgs = await reply_handle(
+        bot, error_message, raw_message, group_id, user_id, alltag
+    )
     tags = find_all_tag(imgs, group_id)
     if tags is None:
         msg = "该语录不存在"
@@ -408,7 +410,9 @@ async def addtag_handle(bot: Bot, event: Event):
     raw_message = str(event)
 
     error_message = "请回复需要指定语录"
-    imgs = await reply_handle(bot, error_message, raw_message, group_id, user_id, addtag)
+    imgs = await reply_handle(
+        bot, error_message, raw_message, group_id, user_id, addtag
+    )
 
     flag, _, _ = add_tag(tags, imgs, group_id)
 
@@ -446,7 +450,9 @@ async def deltag_handle(bot: Bot, event: Event):
     raw_message = str(event)
 
     error_message = "请回复需要指定语录"
-    imgs = await reply_handle(bot, error_message, raw_message, group_id, user_id, deltag)
+    imgs = await reply_handle(
+        bot, error_message, raw_message, group_id, user_id, deltag
+    )
 
     flag, _, _ = delete_tag(tags, imgs, group_id)
 
@@ -569,17 +575,18 @@ async def render_quote_handle(event: MessageEvent):
 
 
 script_batch = on_regex(
-    pattern=f"^{plugin_config.quote_startcmd}batch_upload", **need_at
+    pattern=f"^{plugin_config.quote_startcmd}batch_upload",
+    rule=is_type(GroupMessageEvent),
+    **need_at,
 )
 
 
 @script_batch.handle()
-async def script_batch_handle(bot: Bot, event: Event):
+async def script_batch_handle(bot: Bot, event: GroupMessageEvent):
     """
     处理批量上传
     """
 
-    session_id = event.get_session_id()
     user_id = str(event.get_user_id())
 
     # 必须是超级管理员群聊
@@ -588,7 +595,7 @@ async def script_batch_handle(bot: Bot, event: Event):
     if "group" not in session_id:
         await script_batch.finish("该功能暂不支持私聊")
 
-    group_id = session_id.split("_")[1]
+    group_id = event.group_id
 
     rqqid = r"qqgroup=(.*)\s"
     ryour_path = r"your_path=(.*)\s"
@@ -605,7 +612,8 @@ batch_upload
 qqgroup=123456
 your_path=/home/xxx/images
 tags=aaa bbb ccc"""
-    if len(group_id) == 0 or len(your_path) == 0:
+
+    if len(your_path) == 0:
         await script_batch.finish(instruction)
     # 获取图片
     image_files = copy_images_files(your_path[0], QUOTE_PATH)
