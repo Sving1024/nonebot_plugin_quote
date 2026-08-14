@@ -611,13 +611,15 @@ qqgroup=123456
 your_path=/home/xxx/images
 tags=aaa bbb ccc"""
 
-    if len(your_path) == 0:
+    if dest_group_list and len(your_path) == 0:
         await script_batch.finish(instruction)
     # 获取图片
     image_files = copy_images_files(your_path[0], QUOTE_PATH)
 
     total_len = len(image_files)
     idx = 0
+
+    tags = tags[0].strip().split(" ")
 
     for imgid, img in image_files:
         save_file = pathlib.Path(QUOTE_PATH).joinpath(img).absolute()
@@ -643,17 +645,18 @@ tags=aaa bbb ccc"""
         if not rest_group:
             continue
 
-        ocr_content = get_ocr_content(save_file)
+        ocr_content = ""
+        if plugin_config.quote_enable_ocr:
+            ocr_content = get_ocr_content(save_file)
 
         for dest_group_id in rest_group:
             offer(dest_group_id, save_file, ocr_content)
 
         if len(tags) != 0:
-            tags = tags[0].strip().split(" ")
             for dest_group_id in rest_group:
                 add_tag(tags, imgid, dest_group_id)
 
-        # 每5张语录持久化一次
+        # 每 5 张语录回报一次进度
         if idx % 5 == 0:
             await bot.send_msg(
                 group_id=int(group_id), message=f"当前进度{idx}/{total_len}"
