@@ -592,8 +592,6 @@ async def script_batch_handle(bot: Bot, event: GroupMessageEvent):
     # 必须是超级管理员群聊
     if user_id not in plugin_config.global_superuser:
         await script_batch.finish()
-    if "group" not in session_id:
-        await script_batch.finish("该功能暂不支持私聊")
 
     group_id = event.group_id
 
