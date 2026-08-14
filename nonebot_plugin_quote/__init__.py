@@ -2,6 +2,8 @@
 nonebot_plugin_quote QQ群聊语录库插件
 """
 
+import asyncio
+
 import time
 import io
 import hashlib
@@ -204,9 +206,13 @@ async def save_img_handle(bot: Bot, event: MessageEvent):
         image_path = QUOTE_PATH / source_path.name
     except ApiNotAvailable  as e:
         logger.warning(
-            f"bot.call_api 失败，可能在使用Lagrange，使用 httpx 进行下载: {e}"
+            f"bot.call_api 失败，可能在使用 Lagrange，使用 httpx 进行下载: {e}"
         )
         image_url = file_name
+        match = re.search(r'filename=([^,]+)', raw_message)
+        if not match:
+            await save_img.finish("未检测到图片，请回复所需上传的图片消息来上传语录")
+        file_name = match.group(1).strip('"\'')
         async with httpx.AsyncClient() as client:
             image_url = image_url.replace("&amp;", "&")
             response = await client.get(image_url)
@@ -614,7 +620,7 @@ tags=aaa bbb ccc"""
             group_id=int(group_id),
             message=Message(MessageSegment.image(f"{save_file.as_uri()}")),
         )
-        time.sleep(2)
+        await asyncio.sleep(2)
 
         rest_group = []
 
